@@ -1,0 +1,227 @@
+<script setup>
+import { ref, reactive, onMounted, computed } from 'vue'
+import { getCategoryTree, createCategory, updateCategory, deleteCategory } from '../api/category'
+
+const categories = ref([])
+const dialogVisible = ref(false)
+const isEdit = ref(false)
+const loading = ref(false)
+
+const form = reactive({ id: null, name: '', parentId: null, sortOrder: 0 })
+const parentOptions = ref([])
+
+const buildParentOptions = (list, excludeId = null, prefix = '') => {
+  let result = []
+  for (const item of list) {
+    if (item.id !== excludeId) {
+      result.push({ value: item.id, label: prefix + item.name })
+      if (item.children?.length) {
+        result = result.concat(buildParentOptions(item.children, excludeId, prefix + '  '))
+      }
+    }
+  }
+  return result
+}
+
+const fetchCategories = async () => {
+  loading.value = true
+  try {
+    const res = await getCategoryTree()
+    categories.value = res.data || []
+  } finally {
+    loading.value = false
+  }
+}
+
+const handleCreate = () => {
+  isEdit.value = false
+  form.id = null
+  form.name = ''
+  form.parentId = null
+  form.sortOrder = 0
+  parentOptions.value = [{ value: null, label: '顶级分类' }, ...buildParentOptions(categories.value)]
+  dialogVisible.value = true
+}
+
+const handleEdit = (row) => {
+  isEdit.value = true
+  form.id = row.id
+  form.name = row.name
+  form.parentId = row.parentId
+  form.sortOrder = row.sortOrder
+  parentOptions.value = [{ value: null, label: '顶级分类' }, ...buildParentOptions(categories.value, row.id)]
+  dialogVisible.value = true
+}
+
+const handleDelete = async (id) => {
+  try {
+    await deleteCategory(id)
+    fetchCategories()
+  } catch {}
+}
+
+const handleSave = async () => {
+  if (!form.name.trim()) return
+  try {
+    if (isEdit.value) {
+      await updateCategory(form)
+    } else {
+      await createCategory({ name: form.name, parentId: form.parentId, sortOrder: form.sortOrder })
+    }
+    dialogVisible.value = false
+    fetchCategories()
+  } catch {}
+}
+
+const treeData = computed(() => {
+  const walk = (list) => list.map(item => ({
+    id: item.id,
+    name: item.name,
+    sortOrder: item.sortOrder,
+    children: item.children?.length ? walk(item.children) : [],
+  }))
+  return walk(categories.value)
+})
+
+onMounted(fetchCategories)
+</script>
+
+<template>
+  <div class="category-manage">
+    <!-- Header bar -->
+    <div class="manage-toolbar flat-card">
+      <h3 class="manage-title">分类管理</h3>
+      <el-button type="primary" size="large" @click="handleCreate">
+        <el-icon><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></el-icon>
+        新建分类
+      </el-button>
+    </div>
+
+    <!-- Content card -->
+    <div class="manage-content flat-card">
+      <!-- Loading -->
+      <div v-if="loading" class="skeleton-table">
+        <div v-for="i in 6" :key="i" class="skeleton-row">
+          <div class="skeleton skeleton-cell" style="width: 60px" />
+          <div class="skeleton skeleton-cell" style="width: 200px" />
+          <div class="skeleton skeleton-cell" style="width: 80px" />
+          <div class="skeleton skeleton-cell" style="width: 160px" />
+        </div>
+      </div>
+
+      <!-- Empty -->
+      <div v-else-if="!loading && treeData.length === 0" class="empty-state">
+        <svg viewBox="0 0 80 80" width="56" height="56" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.5">
+          <path d="M16 16h20l4 6h24a4 4 0 014 4v28a4 4 0 01-4 4H16a4 4 0 01-4-4V20a4 4 0 014-4z" />
+        </svg>
+        <span class="empty-title">还没有分类</span>
+        <span class="empty-desc">创建分类来组织你的笔记知识体系</span>
+        <el-button type="primary" @click="handleCreate">创建第一个分类</el-button>
+      </div>
+
+      <!-- Table -->
+      <el-table v-else :data="treeData" row-key="id" default-expand-all>
+        <el-table-column prop="id" label="ID" width="80" />
+        <el-table-column prop="name" label="分类名称" min-width="240">
+          <template #default="{ row }">
+            <span class="cat-name">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--color-primary)" stroke-width="2" stroke-linecap="round" class="cat-icon"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+              {{ row.name }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="sortOrder" label="排序" width="100" />
+        <el-table-column label="操作" width="200">
+          <template #default="{ row }">
+            <el-button text type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
+            <el-popconfirm title="删除此分类会同时删除子分类，确认？" @confirm="handleDelete(row.id)">
+              <template #reference>
+                <el-button text type="danger" size="small">删除</el-button>
+              </template>
+            </el-popconfirm>
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
+
+    <!-- Dialog -->
+    <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑分类' : '新建分类'" width="480px" :close-on-click-modal="false">
+      <el-form :model="form" label-position="top" class="dialog-form">
+        <el-form-item label="分类名称" required>
+          <el-input v-model="form.name" placeholder="请输入分类名称" maxlength="20" size="large" />
+        </el-form-item>
+        <el-form-item label="父分类">
+          <el-select v-model="form.parentId" placeholder="顶级分类" style="width: 100%" size="large">
+            <el-option v-for="opt in parentOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="排序">
+          <el-input-number v-model="form.sortOrder" :min="0" size="large" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button size="large" @click="dialogVisible = false">取消</el-button>
+        <el-button type="primary" size="large" @click="handleSave">确定</el-button>
+      </template>
+    </el-dialog>
+  </div>
+</template>
+
+<style scoped>
+.category-manage {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.manage-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+}
+.manage-title {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.manage-content {
+  background: var(--color-bg-white);
+  padding: 0;
+  overflow: hidden;
+}
+
+.cat-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.cat-icon { flex-shrink: 0; }
+
+.manage-content :deep(.el-table th) {
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+.manage-content :deep(.el-table__body tr:hover > td) {
+  background: var(--color-primary-50);
+}
+
+.dialog-form {
+  padding-top: 8px;
+}
+
+.skeleton-table {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.skeleton-row {
+  display: flex;
+  gap: 20px;
+}
+.skeleton-cell {
+  height: 20px;
+  border-radius: var(--radius-sm);
+}
+</style>

@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(mvn spring-boot:run -q)",
+      "Bash(curl -s http://localhost:8123/api/user/register -X POST -H \"Content-Type: application/json\" -d '{\"username\":\"testmd\",\"password\":\"123456\",\"checkPassword\":\"123456\"}')",
+      "Bash(curl -s http://localhost:8123/api/note/create -X POST -H 'Content-Type: application/json' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIzIiwiaWF0IjoxNzc5MTg4OTI0LCJleHAiOjE3NzkyNzUzMjR9.2ykpZtrFhmTcZjtzktFU-9KgQIv9EH0bXVlT7kr3PT8' -d '{\"title\":\"Markdown 测试笔记\",\"content\":\"# 一级标题\\\\n\\\\n## 二级标题\\\\n\\\\n这是一段**加粗**和*斜体*文字。\\\\n\\\\n- 列表项 1\\\\n- 列表项 2\\\\n- 列表项 3\\\\n\\\\n> 这是一段引用文字\\\\n\\\\n```java\\\\npublic class Hello {\\\\n    public static void main\\(String[] args\\) {\\\\n        System.out.println\\(\\\\\"Hello Markdown!\\\\\"\\);\\\\n    }\\\\n}\\\\n```\\\\n\\\\n| 列A | 列B | 列C |\\\\n|-----|-----|-----|\\\\n| a1  | b1  | c1  |\\\\n| a2  | b2  | c2  |\"}')",
+      "Bash(curl -s http://localhost:8123/api/note/query -X POST -H 'Content-Type: application/json' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIzIiwiaWF0IjoxNzc5MTg4OTI0LCJleHAiOjE3NzkyNzUzMjR9.2ykpZtrFhmTcZjtzktFU-9KgQIv9EH0bXVlT7kr3PT8' -d '{\"pageRequest\":{\"pageNum\":1,\"pageSize\":10}}')",
+      "Bash(mvn spring-boot:run)",
+      "Bash(curl -s http://localhost:8123/api/note/create -X POST -H 'Content-Type: application/json' -H 'Authorization: Bearer __TRACKED_VAR__' -d '{\"title\":\"Markdown Test\",\"content\":\"# Hello\\\\n\\\\nThis is **bold** text.\"}')",
+      "Bash(curl -s http://localhost:8123/api/note/detail/9 -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIzIiwiaWF0IjoxNzc5MTg4OTI0LCJleHAiOjE3NzkyNzUzMjR9.2ykpZtrFhmTcZjtzktFU-9KgQIv9EH0bXVlT7kr3PT8')",
+      "Bash(curl -s http://localhost:8123/api/note/9/tags -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIzIiwiaWF0IjoxNzc5MTg4OTI0LCJleHAiOjE3NzkyNzUzMjR9.2ykpZtrFhmTcZjtzktFU-9KgQIv9EH0bXVlT7kr3PT8')",
+      "Bash(curl -s http://localhost:8123/api/note/9/tags -H 'Authorization: Bearer __TRACKED_VAR__')",
+      "Bash(netstat -ano)",
+      "Bash(awk '{print $5}')",
+      "Bash(xargs -I{} taskkill -PID {} -F)",
+      "Bash(curl -s http://localhost:8123/api/tag/create -X POST -H 'Content-Type: application/json' -H 'Authorization: Bearer __TRACKED_VAR__' -d '{\"name\":\"测试标签\"}')",
+      "Bash(mysql -u root -p123456 -e \"DESCRIBE NoteApp.note_tag;\")",
+      "Bash(mysql -u root -p123456 NoteApp -e ' *)",
+      "Bash(mvn clean *)",
+      "Bash(python3 d:/Project/maple-leaf-noteApp/.claude/skills/ui-ux-pro-max/scripts/search.py \"note-taking app knowledge management productivity minimal elegant\" --design-system -p \"枫叶笔记\" -f markdown)"
+    ]
+  }
+}
