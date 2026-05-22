@@ -212,4 +212,33 @@ onMounted(() => {
   justify-content: center;
   padding: 20px;
 }
+
+/* ===== Mobile ===== */
+@media (max-width: 768px) {
+  .toolbar {
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px 16px;
+  }
+  .toolbar-left {
+    flex-direction: column;
+    width: 100%;
+  }
+  .toolbar-left .el-input {
+    width: 100% !important;
+  }
+  .toolbar-left .el-button {
+    width: 100%;
+  }
+  .table-card {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .page-header {
+    padding: 12px 16px;
+  }
+  .pagination-wrap {
+    padding: 12px;
+  }
+}
 </style>

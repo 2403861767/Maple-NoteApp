@@ -199,4 +199,30 @@ function openNote(id) {
   opacity: 1;
   transform: translateX(4px);
 }
+
+/* ===== Mobile ===== */
+@media (max-width: 768px) {
+  .home {
+    padding-top: 24px;
+  }
+  .welcome-title {
+    font-size: 22px;
+  }
+  .welcome-desc {
+    font-size: 15px;
+  }
+  .new-note-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 16px 32px;
+    font-size: 18px;
+    margin-bottom: 36px;
+  }
+  .recent-item {
+    padding: 12px 0;
+  }
+  .recent-arrow {
+    opacity: 1;
+  }
+}
 </style>

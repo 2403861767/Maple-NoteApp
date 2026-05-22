@@ -351,4 +351,34 @@ onBeforeUnmount(() => {
   color: var(--color-text);
   font-weight: 500;
 }
+
+/* ===== Mobile ===== */
+@media (max-width: 768px) {
+  .profile-header {
+    padding: 24px 20px;
+  }
+  .avatar-section {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .avatar-text {
+    align-items: flex-start;
+  }
+  .profile-section {
+    padding: 20px;
+  }
+  .field-input-row {
+    flex-direction: column;
+  }
+  .field-input-row .el-input {
+    width: 100% !important;
+  }
+  .field-input-row .el-button {
+    width: 100%;
+  }
+  .info-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
 </style>

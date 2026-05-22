@@ -409,4 +409,62 @@ onMounted(() => {
   justify-content: center;
   padding: 20px;
 }
+
+/* ===== Mobile ===== */
+@media (max-width: 768px) {
+  .note-list {
+    gap: 12px;
+  }
+
+  /* Toolbar stacks */
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 12px 16px;
+  }
+  .toolbar-left {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .search-input {
+    width: 100%;
+  }
+  .toolbar-left .el-select {
+    width: 100% !important;
+  }
+  .toolbar-right {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .toolbar-right .el-button {
+    width: 100%;
+  }
+
+  /* Note item: tighter padding */
+  .note-main {
+    padding: 14px 16px;
+  }
+  .note-title {
+    font-size: 14px;
+  }
+  .note-preview {
+    font-size: 12px;
+  }
+
+  /* Always show actions on mobile — !important overrides v-show inline style */
+  .note-actions {
+    display: flex !important;
+    padding: 0 12px 12px 16px;
+  }
+  .note-item {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  /* Compact pagination */
+  .pagination-wrap {
+    padding: 12px;
+  }
+}
 </style>

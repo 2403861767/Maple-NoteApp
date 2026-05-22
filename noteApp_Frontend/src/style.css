@@ -101,6 +101,44 @@ html, body, #app {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* ---- Responsive breakpoints ---- */
+/* Mobile: < 768px, Tablet/Desktop: >= 768px */
+/* Use dvh for mobile browsers with dynamic viewport (address bar) */
+@supports (height: 100dvh) {
+  .layout {
+    height: 100dvh !important;
+  }
+}
+
+/* ---- Responsive table wrapper ---- */
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ---- Responsive dialogs: max-width clamping ---- */
+@media (max-width: 768px) {
+  .el-dialog {
+    width: min(480px, 90vw) !important;
+    margin: 20px auto !important;
+  }
+}
+
+/* ---- Hover degradation on touch devices ---- */
+@media (hover: none) and (pointer: coarse) {
+  /* On touch devices, force hover-reveal elements to stay visible */
+  .tag-close {
+    opacity: 1 !important;
+  }
+  .note-item .note-actions {
+    display: flex !important;
+  }
+  .avatar-overlay {
+    opacity: 1 !important;
+    background: rgba(0, 0, 0, 0.3) !important;
+  }
+}
+
 /* ---- Focus ring (accessibility) ---- */
 :focus-visible {
   outline: 2px solid var(--color-primary);

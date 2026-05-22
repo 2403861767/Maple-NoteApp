@@ -19,9 +19,14 @@ const categories = ref([])
 const allTags = ref([])
 const selectedTagIds = ref([])
 const previewVisible = ref(true)
+const mobileViewMode = ref('edit')
 const imageInput = ref(null)
 const imageUploading = ref(false)
 const editorRef = ref(null)
+
+const mobileMedia = window.matchMedia('(max-width: 768px)')
+const isMobile = ref(mobileMedia.matches)
+mobileMedia.addEventListener('change', (e) => { isMobile.value = e.matches })
 
 const form = reactive({ title: '', content: '', categoryId: null })
 const editorHtml = ref('')
@@ -301,16 +306,32 @@ onMounted(() => {
 
         <!-- Split pane -->
         <div class="md-split" :class="{ 'hide-preview': !previewVisible }">
-          <div class="md-editor-pane">
+          <div class="md-editor-pane" v-show="isMobile ? mobileViewMode === 'edit' : true">
             <TipTapEditor
               ref="editorRef"
               v-model="editorHtml"
               placeholder="开始书写..."
             />
           </div>
-          <div class="md-preview-pane" v-show="previewVisible">
+          <div class="md-preview-pane" v-show="isMobile ? mobileViewMode === 'preview' : previewVisible">
             <div class="md-preview markdown-body" v-html="previewHtml" />
           </div>
+        </div>
+
+        <!-- Mobile: editor/preview tabs -->
+        <div class="mobile-editor-tabs">
+          <button
+            class="mobile-tab"
+            :class="{ active: mobileViewMode === 'edit' }"
+            @click="mobileViewMode = 'edit'"
+            type="button"
+          >编辑</button>
+          <button
+            class="mobile-tab"
+            :class="{ active: mobileViewMode === 'preview' }"
+            @click="mobileViewMode = 'preview'"
+            type="button"
+          >预览</button>
         </div>
       </div>
     </div>
@@ -507,5 +528,117 @@ onMounted(() => {
   line-height: 1.8;
   color: var(--color-text);
   word-break: break-word;
+}
+
+/* ---- Mobile editor tabs (hidden on desktop) ---- */
+.mobile-editor-tabs {
+  display: none;
+  border-top: 1px solid var(--color-border-light);
+  background: var(--color-bg-white);
+}
+.mobile-tab {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: var(--font-family);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: color var(--transition-fast), border-bottom-color var(--transition-fast);
+  border-bottom: 2px solid transparent;
+}
+.mobile-tab.active {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+  font-weight: 600;
+}
+
+/* ======================================== */
+/* ===== Mobile: max-width 768px ===== */
+/* ======================================== */
+@media (max-width: 768px) {
+  .edit-toolbar {
+    padding: 12px 16px;
+  }
+  .edit-title {
+    font-size: 16px;
+  }
+  .edit-actions {
+    gap: 4px;
+  }
+  /* Hide desktop preview toggle on mobile */
+  .preview-toggle {
+    display: none;
+  }
+
+  /* Meta row stacks */
+  .meta-row {
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px 16px;
+  }
+  .title-input {
+    width: 100%;
+  }
+  .meta-field .el-select {
+    width: 100% !important;
+  }
+
+  /* Tags row */
+  .tags-row {
+    padding: 12px 16px;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* Toolbar wraps */
+  .md-toolbar {
+    padding: 4px 8px;
+    gap: 0;
+  }
+  .md-toolbar-btn {
+    width: 30px;
+    height: 28px;
+    font-size: 12px;
+  }
+
+  /* Link input bar */
+  .link-input-row {
+    flex-wrap: wrap;
+  }
+  .link-url-input {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+  .link-text-input {
+    flex: 1 1 calc(50% - 4px);
+    width: auto;
+  }
+
+  /* Split pane — stacked vertically */
+  .md-split {
+    flex-direction: column;
+    min-height: 0;
+    height: auto;
+  }
+  .md-split.hide-preview .md-editor-pane {
+    flex: auto;
+  }
+  .md-editor-pane {
+    min-height: 300px;
+  }
+  .md-preview-pane {
+    border-left: none;
+    border-top: 1px solid var(--color-border-light);
+    min-height: 300px;
+    max-height: none;
+  }
+
+  /* Show mobile tabs */
+  .mobile-editor-tabs {
+    display: flex;
+  }
 }
 </style>

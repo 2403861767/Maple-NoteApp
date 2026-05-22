@@ -215,4 +215,35 @@ const contentHtml = computed(() => renderMarkdown(note.value?.content || ''))
   border: 1px solid var(--color-border-light);
   min-height: 200px;
 }
+
+/* ===== Mobile ===== */
+@media (max-width: 768px) {
+  .detail-card {
+    padding: 20px 16px;
+  }
+  .note-title {
+    font-size: 20px;
+  }
+  .detail-header {
+    flex-direction: column;
+    gap: 12px;
+  }
+  .header-actions {
+    flex-wrap: wrap;
+  }
+  .header-actions .el-button {
+    flex: 1;
+    min-width: 0;
+    justify-content: center;
+  }
+  .detail-meta {
+    gap: 12px;
+  }
+  .detail-content {
+    padding: 16px;
+  }
+  .detail-skeleton {
+    padding: 20px 16px;
+  }
+}
 </style>

@@ -164,4 +164,15 @@ const handleLogin = async () => {
 .switch-link a:hover {
   color: var(--color-primary-dark);
 }
+
+/* ===== Mobile ===== */
+@media (max-width: 768px) {
+  .auth-card {
+    width: min(400px, 90vw);
+    padding: 32px 24px;
+  }
+  .brand-name {
+    font-size: 22px;
+  }
+}
 </style>

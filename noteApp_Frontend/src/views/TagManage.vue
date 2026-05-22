@@ -208,4 +208,28 @@ onMounted(fetchTags)
 .dialog-form {
   padding-top: 8px;
 }
+
+/* ===== Mobile ===== */
+@media (max-width: 768px) {
+  .manage-toolbar {
+    padding: 12px 16px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .manage-toolbar .el-button {
+    width: 100%;
+  }
+  .manage-content {
+    padding: 16px;
+  }
+  .tag-grid {
+    gap: 8px;
+  }
+  .tag-card {
+    padding: 10px 14px;
+  }
+  .tag-close {
+    opacity: 1;
+  }
+}
 </style>

@@ -9,6 +9,7 @@ const user = ref(JSON.parse(localStorage.getItem('user') || '{}'))
 
 const isCollapse = ref(false)
 const darkMode = ref(document.documentElement.classList.contains('dark'))
+const mobileMenuOpen = ref(false)
 
 function toggleTheme() {
   darkMode.value = !darkMode.value
@@ -19,6 +20,11 @@ function toggleTheme() {
 watch(darkMode, (val) => {
   document.documentElement.classList.toggle('dark', val)
 })
+
+function navigateTo(path) {
+  router.push(path)
+  mobileMenuOpen.value = false
+}
 
 const menuItems = computed(() => {
   const items = [
@@ -55,7 +61,7 @@ const handleLogout = () => {
 
 <template>
   <el-container class="layout">
-    <!-- Sidebar -->
+    <!-- Desktop Sidebar — hidden on mobile via CSS -->
     <el-aside :width="isCollapse ? '64px' : '220px'" class="sidebar">
       <!-- Brand -->
       <div class="brand" @click="router.push('/home')">
@@ -101,6 +107,12 @@ const handleLogout = () => {
       <!-- Topbar -->
       <el-header class="topbar" height="56px">
         <div class="topbar-left">
+          <!-- Hamburger — visible only on mobile -->
+          <button class="hamburger-btn" @click="mobileMenuOpen = true" aria-label="打开菜单">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M3 12h18M3 6h18M3 18h18"/>
+            </svg>
+          </button>
           <span class="page-title">{{ route.meta.title || '' }}</span>
         </div>
         <div class="topbar-center">
@@ -137,6 +149,40 @@ const handleLogout = () => {
         <router-view />
       </el-main>
     </el-container>
+
+    <!-- Mobile drawer menu -->
+    <el-drawer
+      v-model="mobileMenuOpen"
+      direction="ltr"
+      size="280px"
+      :with-header="false"
+      :close-on-click-modal="true"
+      class="mobile-drawer"
+    >
+      <div class="drawer-brand" @click="navigateTo('/home')">
+        <svg class="brand-icon" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="var(--color-primary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2 L2 7 L12 12 L22 7 Z" />
+          <path d="M2 17 L12 22 L22 17" />
+          <path d="M2 12 L12 17 L22 12" />
+        </svg>
+        <span class="brand-text">枫叶笔记</span>
+      </div>
+
+      <nav class="drawer-nav">
+        <template v-for="item in menuItems" :key="item.path || item.title">
+          <div v-if="item.type === 'divider'" class="drawer-divider" />
+          <button
+            v-else
+            class="drawer-item"
+            :class="{ active: activeMenu === item.path }"
+            @click="navigateTo(item.path)"
+          >
+            <el-icon><component :is="item.icon" /></el-icon>
+            <span>{{ item.title }}</span>
+          </button>
+        </template>
+      </nav>
+    </el-drawer>
   </el-container>
 </template>
 
@@ -146,7 +192,7 @@ const handleLogout = () => {
   overflow: hidden;
 }
 
-/* ---- Sidebar (Flat Design) ---- */
+/* ---- Sidebar (Desktop) ---- */
 .sidebar {
   background: var(--sidebar-bg);
   display: flex;
@@ -229,7 +275,7 @@ const handleLogout = () => {
 }
 
 
-/* ---- Topbar (Flat) ---- */
+/* ---- Topbar ---- */
 .main-area {
   flex-direction: column;
 }
@@ -245,6 +291,7 @@ const handleLogout = () => {
 .topbar-left {
   display: flex;
   align-items: center;
+  gap: 12px;
 }
 .topbar-center {
   display: flex;
@@ -309,11 +356,114 @@ const handleLogout = () => {
   color: var(--color-danger);
 }
 
+/* ---- Hamburger button (mobile only) ---- */
+.hamburger-btn {
+  display: none;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  flex-shrink: 0;
+}
+.hamburger-btn:hover {
+  background: var(--color-border-light);
+}
+
 /* ---- Content ---- */
 .main-content {
   background: var(--color-bg);
   padding: 24px;
   overflow-y: auto;
   flex: 1;
+}
+
+/* ---- Mobile drawer ---- */
+.drawer-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid var(--color-border-light);
+  cursor: pointer;
+  color: var(--color-text);
+}
+.drawer-brand .brand-text {
+  font-size: 18px;
+  font-weight: 700;
+}
+.drawer-nav {
+  padding: 8px 0;
+  display: flex;
+  flex-direction: column;
+}
+.drawer-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 20px;
+  border: none;
+  background: transparent;
+  color: var(--sidebar-text);
+  font-size: 15px;
+  font-family: var(--font-family);
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+  text-align: left;
+}
+.drawer-item:hover {
+  background: var(--sidebar-hover);
+}
+.drawer-item.active {
+  background: rgba(13, 148, 136, 0.1);
+  color: var(--sidebar-active);
+  font-weight: 600;
+}
+.drawer-divider {
+  height: 1px;
+  background: var(--color-border-light);
+  margin: 4px 20px;
+}
+
+/* ======================================== */
+/* ===== Mobile: max-width 768px ===== */
+/* ======================================== */
+@media (max-width: 768px) {
+  /* Hide desktop sidebar */
+  .sidebar {
+    display: none;
+  }
+
+  /* Show hamburger */
+  .hamburger-btn {
+    display: flex;
+  }
+
+  /* Compact topbar */
+  .topbar {
+    padding: 0 12px;
+  }
+
+  /* Hide username, keep avatar only */
+  .user-name {
+    display: none;
+  }
+  .logout-btn {
+    display: none;
+  }
+  .user-dropdown {
+    gap: 0;
+  }
+
+  /* Tighter content padding */
+  .main-content {
+    padding: 12px;
+  }
 }
 </style>

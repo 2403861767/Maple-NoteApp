@@ -224,4 +224,20 @@ onMounted(fetchCategories)
   height: 20px;
   border-radius: var(--radius-sm);
 }
+
+/* ===== Mobile ===== */
+@media (max-width: 768px) {
+  .manage-toolbar {
+    padding: 12px 16px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .manage-toolbar .el-button {
+    width: 100%;
+  }
+  .manage-content {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
 </style>
