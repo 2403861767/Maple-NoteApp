@@ -1149,3 +1149,232 @@ const previewHtml = computed(() => markdownToHtml(form.content))  // 统一入�
 ```
 
 **原则**：一个功能只从一个入口导入。如果两个模块导出了相同逻辑，选一个作为唯一来源，另一个做 re-export 或直接删除。
+
+---
+
+## 56. v1.0 生产部署记录（腾讯云香港 + 宝塔 + NameSilo）
+
+### 56.1 实际部署信息
+
+| 项目 | 值 |
+|------|-----|
+| 服务器 | 腾讯云轻量 香港 2核2G |
+| 公网 IP | x.x.x.x |
+| 域名 | SEELEAFNOTE.TOP（NameSilo 购买） |
+| 系统 | Ubuntu 22.04（宝塔 Linux 面板镜像） |
+| 后端端口 | 8123（只监听 127.0.0.1） |
+| 域名 → IP | NameSilo DNS 加 A 记录（@ + www） |
+
+### 56.2 架构
+
+```
+用户浏览器 → http://SEELEAFNOTE.TOP
+    │
+    ▼
+Nginx :80
+    ├── /          → /www/wwwroot/noteapp/static/  (Vue dist)
+    ├── /api/      → 127.0.0.1:8123/api/           (Spring Boot)
+    └── /file/     → 127.0.0.1:8123/api/file/      (Spring Boot)
+```
+
+前后端同域名同端口，**不存在跨域问题**，SecurityConfig 的 CORS 无需修改。
+
+### 56.3 服务器软件路径（宝塔安装）
+
+宝塔把软件装在 `/www/server/` 下，不走系统 PATH。SSH 里需配 PATH：
+
+```bash
+# 添加到 ~/.bashrc
+export PATH=/www/server/java/jdk-17.0.8/bin:/www/server/mysql/bin:$PATH
+```
+
+| 软件 | 路径 |
+|------|------|
+| JDK 17 | `/www/server/java/jdk-17.0.8/` |
+| MySQL 8.0 | `/www/server/mysql/` |
+| Nginx | `/www/server/nginx/` |
+
+### 56.4 项目目录结构（服务器上）
+
+```
+/www/wwwroot/noteapp/
+├── application-prod.yml      ← 生产配置（外部优先于 JAR 内）
+├── noteApp-0.0.1-SNAPSHOT.jar
+├── app.log                   ← 运行日志
+├── static/                   ← 前端 dist 文件
+└── uploads/                  ← 用户上传文件
+```
+
+### 56.5 DDL 修正（部署前必须检查）
+
+实体和 DDL 不一致的地方：
+
+| 表 | 问题 | 修正 |
+|------|------|------|
+| `user` | 缺少 `role` 列 | 加 `role VARCHAR(20) DEFAULT 'user'` |
+| `user` | DDL 不能有 `enabled` 列 | `enabled` 是 VO 字段，从 `is_deleted` 计算：`vo.setEnabled(user.getIsDeleted() == 0)` |
+| `note_tag` | DDL 是复合主键，实体有 `id` | 加 `id BIGINT AUTO_INCREMENT PRIMARY KEY`，复合列改 `UNIQUE KEY uk_note_tag` |
+
+**禁用/启用机制**：`disableUser` → `UPDATE user SET is_deleted = 1`；`enableUser` → `UPDATE user SET is_deleted = 0`。本质就是逻辑删除/恢复。
+
+### 56.6 手动安装步骤备忘
+
+#### 本地新增文件
+
+1. `noteApp_Backemd/src/main/resources/application-prod.yml`（gitignore，不提交）
+2. `noteApp_Backemd/.gitignore` 加上 `application-prod.yml`
+
+#### 服务器（宝塔面板）
+
+1. 宝塔「软件商店」→ 装 LNMP（Nginx + MySQL 8.0，不装 PHP）
+2. 宝塔「软件商店」→ 搜「Java 环境管理器」→ 装 JDK 17
+3. 腾讯云控制台「防火墙」放行端口 80、443、8888、22
+4. 宝塔「数据库」→ 改 root 密码 → 添加数据库 `NoteApp`（utf8mb4）
+5. 宝塔「网站」→ 添加站点 → 域名填 `SEELEAFNOTE.TOP www.SEELEAFNOTE.TOP x.x.x.x`，PHP 选「纯静态」
+6. 宝塔「网站」→ 点站名 →「网站目录」→ 运行目录改 `/www/wwwroot/noteapp/static`
+
+#### NameSilo DNS
+
+```
+Type: A   Host: @    Value: x.x.x.x
+Type: A   Host: www  Value: x.x.x.x
+```
+
+### 56.7 部署命令速查
+
+#### 打包（本地）
+
+```bash
+# 后端
+cd d:/Project/maple-leaf-noteApp/noteApp_Backemd
+mvn clean package -DskipTests
+
+# 前端
+cd d:/Project/maple-leaf-noteApp/noteApp_Frontend
+npm run build
+```
+
+#### 上传（本地 Git Bash）
+
+```bash
+# 修改 application-prod.yml 里的 password 和 jwt.secret 后上传
+scp "d:/Project/maple-leaf-noteApp/noteApp_Backemd/target/noteApp-0.0.1-SNAPSHOT.jar" root@x.x.x.x:/www/wwwroot/noteapp/
+scp "d:/Project/maple-leaf-noteApp/noteApp_Backemd/src/main/resources/application-prod.yml" root@x.x.x.x:/www/wwwroot/noteapp/
+scp -r "d:/Project/maple-leaf-noteApp/noteApp_Frontend/dist/"* root@x.x.x.x:/www/wwwroot/noteapp/static/
+```
+
+#### 导入 DDL（SSH）
+
+```bash
+mysql -u root -p NoteApp < /tmp/ddl.sql
+mysql -u root -p NoteApp -e "SHOW TABLES;"
+```
+
+#### 启动验证（SSH 前台）
+
+```bash
+cd /www/wwwroot/noteapp
+java -jar noteApp-0.0.1-SNAPSHOT.jar --spring.profiles.active=prod
+# Ctrl+C 停止
+```
+
+#### 后台运行（SSH）
+
+```bash
+cd /www/wwwroot/noteapp
+nohup java -jar noteApp-0.0.1-SNAPSHOT.jar --spring.profiles.active=prod > app.log 2>&1 &
+```
+
+### 56.8 Nginx 配置（宝塔面板 → 网站 → 配置文件）
+
+```nginx
+server {
+    listen 80;
+    server_name SEELEAFNOTE.TOP www.SEELEAFNOTE.TOP x.x.x.x;
+
+    root /www/wwwroot/noteapp/static;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    location /api/ {
+        proxy_pass http://127.0.0.1:8123;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    location /file/ {
+        proxy_pass http://127.0.0.1:8123/api/file/;
+        proxy_set_header Host $host;
+    }
+}
+```
+
+保存后点「重载配置」，或者 SSH：`nginx -s reload`
+
+### 56.9 systemd 服务（开机自启 + 崩了自动重启）
+
+```bash
+cat > /etc/systemd/system/noteapp.service << 'EOF'
+[Unit]
+Description=Maple Leaf Note App
+After=network.target mysql.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/www/wwwroot/noteapp
+ExecStart=/www/server/java/jdk-17.0.8/bin/java -jar /www/wwwroot/noteapp/noteApp-0.0.1-SNAPSHOT.jar --spring.profiles.active=prod
+Restart=always
+RestartSec=10
+StandardOutput=append:/www/wwwroot/noteapp/app.log
+StandardError=append:/www/wwwroot/noteapp/app.log
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl daemon-reload
+systemctl stop noteapp 2>/dev/null    # 停掉 nohup 的旧进程
+systemctl start noteapp
+systemctl enable noteapp               # 开机自启
+systemctl status noteapp               # 确认 active (running)
+```
+
+### 56.10 管理员账号设置
+
+部署后注册页正常注册，然后 SSH 改 role：
+
+```bash
+mysql -u root -p NoteApp -e "UPDATE user SET role = 'admin' WHERE username = '你注册的用户名';"
+```
+
+不能直接 SQL INSERT 管理员——密码是 BCrypt 加密的，必须通过注册接口加密。
+
+### 56.11 日常更新流程
+
+```bash
+# 本地
+mvn clean package -DskipTests
+npm run build
+
+# 上传
+scp target/noteApp-0.0.1-SNAPSHOT.jar root@x.x.x.x:/www/wwwroot/noteapp/
+scp -r dist/* root@x.x.x.x:/www/wwwroot/noteapp/static/
+
+# 重启
+ssh root@x.x.x.x "systemctl restart noteapp && systemctl status noteapp"
+```
+
+### 56.12 踩坑记录
+
+| 坑 | 现象 | 原因 | 解决 |
+|------|------|------|------|
+| SSH 找不到 java/mysql | `command not found` | 宝塔装在 `/www/server/`，不在系统 PATH | 配 `~/.bashrc` 加 PATH |
+| `scp` 报 `cp: cannot create` | 文件传不上去 | 在 SSH 窗口里执行了 scp | scp 要在本地 Git Bash 执行 |
+| JAR 名不对 | `Unable to access jarfile` | mvn 生成的 JAR 叫 `noteApp-0.0.1-SNAPSHOT.jar`，不是 `noteApp_Backemd-...` | 先用 `ls` 确认文件名 |
+| 宝塔面板 8888 打不开 | 连接超时 | 腾讯云安全组没放行 8888 | 控制台防火墙添加规则 |
+| 宝塔下载慢 | 组件安装卡住 | 香港连宝塔 CDN 慢 | 耐心等，或用 SSH apt 装
