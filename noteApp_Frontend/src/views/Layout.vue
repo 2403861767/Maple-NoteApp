@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { Fold, Expand, User } from '@element-plus/icons-vue'
+import { Fold, Expand, User, SwitchButton } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -390,6 +390,10 @@ const handleLogout = () => {
 }
 
 /* ---- Mobile drawer ---- */
+.mobile-drawer :deep(.el-drawer__body) {
+  display: flex;
+  flex-direction: column;
+}
 .drawer-brand {
   display: flex;
   align-items: center;
