@@ -1,7 +1,10 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { getCurrentUser, uploadAvatar, updateProfile } from '../api/user'
+
+const router = useRouter()
 
 const ALLOWED_MIME = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
 const ALLOWED_EXT = ['jpg', 'jpeg', 'png', 'gif', 'webp']
@@ -85,6 +88,12 @@ const handleSaveNickname = async () => {
   } finally {
     saving.value = false
   }
+}
+
+const handleLogout = () => {
+  localStorage.removeItem('token')
+  localStorage.removeItem('user')
+  router.push('/login')
 }
 
 onMounted(fetchUser)
@@ -192,6 +201,12 @@ onBeforeUnmount(() => {
             <span class="info-value">{{ user.createTime || '-' }}</span>
           </div>
         </div>
+      </div>
+
+      <div class="profile-section">
+        <el-button type="danger" size="large" style="width: 100%" @click="handleLogout">
+          退出登录
+        </el-button>
       </div>
     </template>
   </div>

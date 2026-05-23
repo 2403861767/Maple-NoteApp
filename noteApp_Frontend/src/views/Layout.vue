@@ -182,6 +182,12 @@ const handleLogout = () => {
           </button>
         </template>
       </nav>
+      <div class="drawer-footer">
+        <button class="drawer-item logout-item" @click="handleLogout">
+          <el-icon><SwitchButton /></el-icon>
+          <span>退出登录</span>
+        </button>
+      </div>
     </el-drawer>
   </el-container>
 </template>
@@ -429,6 +435,17 @@ const handleLogout = () => {
   height: 1px;
   background: var(--color-border-light);
   margin: 4px 20px;
+}
+.drawer-footer {
+  margin-top: auto;
+  border-top: 1px solid var(--color-border-light);
+  padding: 8px 0;
+}
+.logout-item {
+  color: var(--el-color-danger) !important;
+}
+.logout-item:hover {
+  background: rgba(245, 108, 108, 0.08) !important;
 }
 
 /* ======================================== */
