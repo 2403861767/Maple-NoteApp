@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getAdminCategories, adminDeleteCategory } from '../api/admin'
 
@@ -9,6 +9,35 @@ const userKeyword = ref('')
 const total = ref(0)
 const currentPage = ref(1)
 const pageSize = ref(10)
+
+const collapsedMap = reactive({})
+
+const toggleExpand = (id) => {
+  if (collapsedMap[id]) {
+    delete collapsedMap[id]
+  } else {
+    collapsedMap[id] = true
+  }
+}
+
+const tableData = computed(() => {
+  const result = []
+  const walk = (list, depth = 0) => {
+    if (!list?.length) return
+    for (const item of list) {
+      const hasChildren = !!item.children?.length
+      const node = { ...item, _depth: depth, _hasChildren: hasChildren }
+      const savedChildren = node.children
+      delete node.children
+      result.push(node)
+      if (hasChildren && !collapsedMap[item.id]) {
+        walk(savedChildren, depth + 1)
+      }
+    }
+  }
+  walk(categories.value)
+  return result
+})
 
 const fetchCategories = async () => {
   loading.value = true
@@ -100,11 +129,15 @@ onMounted(fetchCategories)
         <span class="empty-desc">所有用户都还没有创建分类</span>
       </div>
 
-      <el-table v-else :data="categories" row-key="id" default-expand-all stripe>
+      <el-table v-else :data="tableData" stripe>
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="name" label="分类名称" min-width="220">
           <template #default="{ row }">
-            <span class="cat-name">
+            <span class="cat-name" :style="{ paddingLeft: row._depth * 24 + 'px' }">
+              <span v-if="row._hasChildren" class="tree-toggle" @click="toggleExpand(row.id)">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" :class="{ collapsed: collapsedMap[row.id] }"><path d="M8 4l8 8-8 8"/></svg>
+              </span>
+              <span v-else class="tree-toggle tree-toggle--ghost" />
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--color-primary)" stroke-width="2" stroke-linecap="round" class="cat-icon"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
               {{ row.name }}
             </span>
@@ -174,6 +207,32 @@ onMounted(fetchCategories)
   gap: 8px;
 }
 .cat-icon { flex-shrink: 0; }
+
+.tree-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+  border-radius: var(--radius-sm);
+}
+.tree-toggle:hover {
+  color: var(--color-text-primary);
+  background: var(--color-fill-hover);
+}
+.tree-toggle svg {
+  transform: rotate(90deg);
+  transition: transform 0.15s;
+}
+.tree-toggle svg.collapsed {
+  transform: rotate(0deg);
+}
+.tree-toggle--ghost {
+  visibility: hidden;
+}
 
 .table-card :deep(.el-table th) {
   font-weight: 600;

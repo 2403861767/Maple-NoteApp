@@ -73,7 +73,10 @@ const handleFileChange = async (e) => {
 }
 
 const handleSaveNickname = async () => {
-  if (!nicknameForm.value.nickname.trim()) return
+  if (!nicknameForm.value.nickname.trim()) {
+    ElMessage.warning('请输入昵称')
+    return
+  }
   saving.value = true
   try {
     const res = await updateProfile({ nickname: nicknameForm.value.nickname })

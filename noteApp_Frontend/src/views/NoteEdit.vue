@@ -1,10 +1,11 @@
 <script setup>
-import { ref, reactive, onMounted, computed, watch, nextTick } from 'vue'
+import { ref, reactive, onMounted, onBeforeUnmount, computed, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { createNote, getNoteDetail, updateNote, getNoteTags, setNoteTags, uploadNoteImage } from '../api/note'
 import { getCategoryTree } from '../api/category'
 import { getTagList } from '../api/tag'
 import { markdownToHtml, htmlToMarkdown } from '../composables/useMarkdownConverter'
+import { useShortcuts } from '../composables/useShortcuts'
 import TipTapEditor from '../components/TipTapEditor.vue'
 import { ElMessage } from 'element-plus'
 
@@ -26,7 +27,8 @@ const editorRef = ref(null)
 
 const mobileMedia = window.matchMedia('(max-width: 768px)')
 const isMobile = ref(mobileMedia.matches)
-mobileMedia.addEventListener('change', (e) => { isMobile.value = e.matches })
+function onMobileChange(e) { isMobile.value = e.matches }
+mobileMedia.addEventListener('change', onMobileChange)
 
 const form = reactive({ title: '', content: '', categoryId: null })
 const editorHtml = ref('')
@@ -191,7 +193,10 @@ const fetchNote = async () => {
 }
 
 const handleSave = async () => {
-  if (!form.title.trim()) return
+  if (!form.title.trim()) {
+    ElMessage.warning('请输入笔记标题')
+    return
+  }
   loading.value = true
   try {
     let noteId
@@ -215,10 +220,21 @@ const toggleTag = (tagId) => {
   else selectedTagIds.value.push(tagId)
 }
 
+// ---- Keyboard shortcuts ----
+const { register } = useShortcuts()
+register('Mod+s', handleSave, { description: '保存笔记', category: '编辑器' })
+register('Mod+p', () => { previewVisible.value = !previewVisible.value }, { description: '切换预览', category: '编辑器' })
+register('Mod+Shift+i', triggerImage, { description: '插入图片', category: '编辑器' })
+register('Mod+k', openLinkInput, { description: '插入链接', category: '编辑器' })
+
 onMounted(() => {
   fetchCategories()
   fetchTags()
   fetchNote()
+})
+
+onBeforeUnmount(() => {
+  mobileMedia.removeEventListener('change', onMobileChange)
 })
 </script>
 
@@ -401,7 +417,7 @@ onMounted(() => {
 .tag-chip.active {
   background: var(--color-primary);
   border-color: var(--color-primary);
-  color: #fff;
+  color: var(--color-on-primary);
   font-weight: 500;
 }
 
@@ -491,7 +507,7 @@ onMounted(() => {
 }
 .link-confirm-btn {
   background: var(--color-primary);
-  color: #fff;
+  color: var(--color-on-primary);
 }
 .link-confirm-btn:hover { background: var(--color-primary-dark); }
 .link-cancel-btn {

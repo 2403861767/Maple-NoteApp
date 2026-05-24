@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { queryNotes } from '../api/note'
+import { useShortcuts } from '../composables/useShortcuts'
 
 const router = useRouter()
 const user = ref(JSON.parse(localStorage.getItem('user') || '{}'))
@@ -23,6 +24,11 @@ onMounted(async () => {
 function openNote(id) {
   router.push(`/note/detail/${id}`)
 }
+
+// ---- Keyboard shortcuts ----
+const { register } = useShortcuts()
+register('n', () => router.push('/note/create'), { description: '新建笔记', category: '首页' })
+register('Mod+n', () => router.push('/note/create'), { description: '新建笔记', category: '首页' })
 </script>
 
 <template>
@@ -108,7 +114,7 @@ function openNote(id) {
   gap: 10px;
   padding: 14px 32px;
   background: var(--color-primary);
-  color: #fff;
+  color: var(--color-on-primary);
   border: none;
   border-radius: var(--radius-lg);
   font-size: 17px;

@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
+import html2pdf from 'html2pdf.js'
 import request from './index'
 import { renderMarkdown } from '../utils/md'
 
@@ -29,13 +30,63 @@ export const uploadNoteImage = (file) => {
   return request.post('/note/image/upload', formData)
 }
 
-// 导出笔记为 PDF（通过浏览器打印）
+// 导出笔记为 PDF
+let pdfExporting = false
 export const exportNotePdf = async (id, title) => {
+  if (pdfExporting) return
+  pdfExporting = true
+
   const res = await getNoteDetail(id)
   const note = res.data
   const contentHtml = renderMarkdown(note.content || '')
 
-  const printHtml = `<!DOCTYPE html>
+  // 全屏遮罩层 — 既做加载提示，也让容器在视口内可被 html2canvas 正确渲染
+  const overlay = document.createElement('div')
+  overlay.style.cssText =
+    'position:fixed;inset:0;z-index:99999;background:#fff;display:flex;flex-direction:column;align-items:center;overflow-y:auto;'
+  overlay.innerHTML =
+    '<div style="margin-top:20px;font-size:14px;color:#999;">正在生成 PDF...</div>'
+  document.body.appendChild(overlay)
+
+  // 容器用 static 定位，避免 html2pdf.js position:fixed/absolute 的已知空白 bug
+  const container = document.createElement('div')
+  container.style.cssText =
+    'position:static;background:#fff;padding:40px;width:794px;'
+  container.innerHTML = `<div style="font-family:'PingFang SC','Microsoft YaHei',sans-serif;line-height:1.8;color:#1a1a1a;">
+  <h1 style="font-size:1.8em;border-bottom:2px solid #0D9488;padding-bottom:0.3em;color:#0D9488;">${escapeHtml(title)}</h1>
+  ${contentHtml}
+</div>`
+  overlay.appendChild(container)
+
+  try {
+    await html2pdf().set({
+      margin: [15, 15, 15, 15],
+      filename: `${title}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+    }).from(container).save()
+  } catch {
+    ElMessage.error('PDF 导出失败，请稍后重试')
+  } finally {
+    document.body.removeChild(overlay)
+    pdfExporting = false
+  }
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div')
+  div.textContent = str
+  return div.innerHTML
+}
+
+// 导出笔记为 HTML 文件
+export const exportNoteHtml = async (id, title) => {
+  const res = await getNoteDetail(id)
+  const note = res.data
+  const contentHtml = renderMarkdown(note.content || '')
+
+  const fullHtml = `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
@@ -44,7 +95,7 @@ export const exportNotePdf = async (id, title) => {
     @page { margin: 20mm; size: A4; }
     body {
       font-family: 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
-      line-height: 1.8; color: #1a1a1a; max-width: 100%;
+      line-height: 1.8; color: #1a1a1a; max-width: 860px; margin: 0 auto; padding: 40px 20px;
     }
     h1 { font-size: 1.8em; border-bottom: 2px solid #0D9488; padding-bottom: 0.3em; color: #0D9488; }
     h2 { font-size: 1.4em; border-bottom: 1px solid #e0e0e0; padding-bottom: 0.2em; }
@@ -58,7 +109,6 @@ export const exportNotePdf = async (id, title) => {
     th, td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; }
     th { background: #f0fdfa; font-weight: 600; }
     a { color: #0D9488; }
-    @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
   </style>
 </head>
 <body>
@@ -67,29 +117,15 @@ export const exportNotePdf = async (id, title) => {
 </body>
 </html>`
 
-  const blob = new Blob([printHtml], { type: 'text/html;charset=utf-8' })
+  const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' })
   const url = URL.createObjectURL(blob)
-  const printWindow = window.open(url, '_blank', 'width=800,height=600')
-  if (printWindow) {
-    printWindow.addEventListener('load', () => {
-      setTimeout(() => { printWindow.print() }, 300)
-    }, { once: true })
-    const checkClosed = setInterval(() => {
-      if (printWindow.closed) {
-        clearInterval(checkClosed)
-        URL.revokeObjectURL(url)
-      }
-    }, 500)
-  } else {
-    URL.revokeObjectURL(url)
-    ElMessage.warning('浏览器已阻止弹窗，请允许本站弹窗后重试')
-  }
-}
-
-function escapeHtml(str) {
-  const div = document.createElement('div')
-  div.textContent = str
-  return div.innerHTML
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `${title}.html`
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
 }
 
 // 导出笔记为 Markdown 文件

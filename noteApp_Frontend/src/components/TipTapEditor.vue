@@ -132,18 +132,18 @@ defineExpose({ editor, setContent })
 
 /* Dark mode */
 html.dark .tiptap-editor .ProseMirror blockquote {
-  background: #1E293B;
-  color: #999999;
+  background: var(--color-bg-white);
+  color: var(--color-text-secondary);
 }
 html.dark .tiptap-editor .ProseMirror code {
-  background: #334155;
-  color: #F87171;
+  background: var(--color-border);
+  color: var(--color-danger);
 }
 html.dark .tiptap-editor .ProseMirror pre {
-  background: #0F172A;
-  border: 1px solid #334155;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
 }
 html.dark .tiptap-editor .ProseMirror th {
-  background: #1E293B;
+  background: var(--color-bg-white);
 }
 </style>

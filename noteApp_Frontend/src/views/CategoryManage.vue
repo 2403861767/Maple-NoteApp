@@ -1,5 +1,6 @@
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
+import { ElMessage } from 'element-plus'
 import { getCategoryTree, createCategory, updateCategory, deleteCategory } from '../api/category'
 
 const categories = ref([])
@@ -61,7 +62,10 @@ const handleDelete = async (id) => {
 }
 
 const handleSave = async () => {
-  if (!form.name.trim()) return
+  if (!form.name.trim()) {
+    ElMessage.warning('请输入分类名称')
+    return
+  }
   try {
     if (isEdit.value) {
       await updateCategory(form)
@@ -73,14 +77,33 @@ const handleSave = async () => {
   } catch {}
 }
 
-const treeData = computed(() => {
-  const walk = (list) => list.map(item => ({
-    id: item.id,
-    name: item.name,
-    sortOrder: item.sortOrder,
-    children: item.children?.length ? walk(item.children) : [],
-  }))
-  return walk(categories.value)
+const collapsedMap = reactive({})
+
+const toggleExpand = (id) => {
+  if (collapsedMap[id]) {
+    delete collapsedMap[id]
+  } else {
+    collapsedMap[id] = true
+  }
+}
+
+const flatData = computed(() => {
+  const result = []
+  const walk = (list, depth = 0) => {
+    if (!list?.length) return
+    for (const item of list) {
+      const hasChildren = !!item.children?.length
+      const node = { ...item, _depth: depth, _hasChildren: hasChildren }
+      const savedChildren = node.children
+      delete node.children
+      result.push(node)
+      if (hasChildren && !collapsedMap[item.id]) {
+        walk(savedChildren, depth + 1)
+      }
+    }
+  }
+  walk(categories.value)
+  return result
 })
 
 onMounted(fetchCategories)
@@ -110,7 +133,7 @@ onMounted(fetchCategories)
       </div>
 
       <!-- Empty -->
-      <div v-else-if="!loading && treeData.length === 0" class="empty-state">
+      <div v-else-if="!loading && flatData.length === 0" class="empty-state">
         <svg viewBox="0 0 80 80" width="56" height="56" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.5">
           <path d="M16 16h20l4 6h24a4 4 0 014 4v28a4 4 0 01-4 4H16a4 4 0 01-4-4V20a4 4 0 014-4z" />
         </svg>
@@ -120,11 +143,15 @@ onMounted(fetchCategories)
       </div>
 
       <!-- Table -->
-      <el-table v-else :data="treeData" row-key="id" default-expand-all>
+      <el-table v-else :data="flatData">
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="name" label="分类名称" min-width="240">
           <template #default="{ row }">
-            <span class="cat-name">
+            <span class="cat-name" :style="{ paddingLeft: row._depth * 24 + 'px' }">
+              <span v-if="row._hasChildren" class="tree-toggle" @click="toggleExpand(row.id)">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" :class="{ collapsed: collapsedMap[row.id] }"><path d="M8 4l8 8-8 8"/></svg>
+              </span>
+              <span v-else class="tree-toggle tree-toggle--ghost" />
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--color-primary)" stroke-width="2" stroke-linecap="round" class="cat-icon"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
               {{ row.name }}
             </span>
@@ -197,6 +224,32 @@ onMounted(fetchCategories)
   gap: 8px;
 }
 .cat-icon { flex-shrink: 0; }
+
+.tree-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+  border-radius: var(--radius-sm);
+}
+.tree-toggle:hover {
+  color: var(--color-text-primary);
+  background: var(--color-fill-hover);
+}
+.tree-toggle svg {
+  transform: rotate(90deg);
+  transition: transform 0.15s;
+}
+.tree-toggle svg.collapsed {
+  transform: rotate(0deg);
+}
+.tree-toggle--ghost {
+  visibility: hidden;
+}
 
 .manage-content :deep(.el-table th) {
   font-weight: 600;

@@ -1,9 +1,10 @@
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { queryNotes, deleteNote, uploadNote, exportNote, exportNotePdf, getBatchNoteTags } from '../api/note'
+import { queryNotes, deleteNote, uploadNote, exportNote, exportNotePdf, exportNoteHtml, getBatchNoteTags } from '../api/note'
 import { getCategoryTree } from '../api/category'
 import { ElMessage } from 'element-plus'
+import { useShortcuts } from '../composables/useShortcuts'
 
 const router = useRouter()
 const loading = ref(false)
@@ -18,6 +19,7 @@ const fileInput = ref(null)
 const selectKey = ref(0)
 const hoveredId = ref(null)
 const clickedId = ref(null)
+const searchInputRef = ref(null)
 
 const searchForm = reactive({ title: '', categoryId: null })
 
@@ -137,6 +139,15 @@ function handleNoteClick(id) {
   }
 }
 
+// ---- Keyboard shortcuts ----
+const { register } = useShortcuts()
+register('Mod+f', () => {
+  const el = searchInputRef.value?.$el?.querySelector('input') || searchInputRef.value?.$el
+  el?.focus()
+}, { description: '聚焦搜索框', category: '笔记列表' })
+register('n', () => router.push('/note/create'), { description: '新建笔记', category: '笔记列表' })
+register('Mod+n', () => router.push('/note/create'), { description: '新建笔记', category: '笔记列表' })
+
 onMounted(() => {
   fetchNotes()
   fetchCategories()
@@ -149,6 +160,7 @@ onMounted(() => {
     <div class="toolbar flat-card">
       <div class="toolbar-left">
         <el-input
+          ref="searchInputRef"
           v-model="searchForm.title"
           placeholder="搜索标题或内容..."
           clearable
@@ -248,6 +260,7 @@ onMounted(() => {
             <el-button text type="primary" size="small" @click.stop="router.push(`/note/edit/${note.id}`)">编辑</el-button>
             <el-button text size="small" @click.stop="exportNote(note.id, note.title)">导出MD</el-button>
             <el-button text size="small" @click.stop="exportNotePdf(note.id, note.title)">导出PDF</el-button>
+            <el-button text size="small" @click.stop="exportNoteHtml(note.id, note.title)">导出HTML</el-button>
             <el-popconfirm title="确认删除？" @confirm="handleDelete(note.id)">
               <template #reference>
                 <el-button text type="danger" size="small">删除</el-button>

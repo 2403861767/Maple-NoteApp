@@ -1,5 +1,6 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
 import { getTagList, createTag, updateTag, deleteTag } from '../api/tag'
 
 const tags = ref([])
@@ -41,7 +42,10 @@ const handleDelete = async (id) => {
 }
 
 const handleSave = async () => {
-  if (!form.name.trim()) return
+  if (!form.name.trim()) {
+    ElMessage.warning('请输入标签名称')
+    return
+  }
   try {
     if (isEdit.value) {
       await updateTag(form)
@@ -202,7 +206,7 @@ onMounted(fetchTags)
 }
 .tag-close:hover {
   background: var(--color-danger);
-  color: #fff;
+  color: var(--color-on-danger);
 }
 
 .dialog-form {

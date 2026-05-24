@@ -2,6 +2,8 @@
 import { ref, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Fold, Expand, User, SwitchButton } from '@element-plus/icons-vue'
+import { useShortcuts } from '../composables/useShortcuts'
+import ShortcutHelp from '../components/ShortcutHelp.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -57,6 +59,25 @@ const handleLogout = () => {
   localStorage.removeItem('user')
   router.push('/login')
 }
+
+// ---- Global keyboard shortcuts ----
+const { register, helpVisible } = useShortcuts()
+
+register('Mod+\\', () => { isCollapse.value = !isCollapse.value }, {
+  description: '折叠/展开侧边栏', category: '全局',
+})
+register('Mod+d', toggleTheme, {
+  description: '切换暗色/亮色模式', category: '全局',
+})
+register('?', () => { helpVisible.value = true }, {
+  description: '打开快捷键帮助', category: '全局',
+})
+register('Mod+/', () => { helpVisible.value = true }, {
+  description: '打开快捷键帮助', category: '全局',
+})
+register('Mod+h', () => router.push('/home'), {
+  description: '回到首页', category: '全局',
+})
 </script>
 
 <template>
@@ -189,6 +210,9 @@ const handleLogout = () => {
         </button>
       </div>
     </el-drawer>
+
+    <!-- Keyboard shortcut help panel -->
+    <ShortcutHelp />
   </el-container>
 </template>
 
@@ -205,7 +229,7 @@ const handleLogout = () => {
   flex-direction: column;
   transition: width var(--transition-slow);
   overflow: hidden;
-  border-right: 1px solid rgba(0, 0, 0, 0.06);
+  border-right: 1px solid var(--color-border-light);
 }
 
 .brand {
@@ -215,12 +239,12 @@ const handleLogout = () => {
   height: 56px;
   padding: 0 12px 0 18px;
   color: var(--color-text);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  border-bottom: 1px solid var(--color-border-light);
   transition: background var(--transition-fast);
   flex-shrink: 0;
 }
 .brand:hover {
-  background: rgba(0, 0, 0, 0.03);
+  background: var(--sidebar-hover);
 }
 .brand-icon {
   flex-shrink: 0;
@@ -276,7 +300,7 @@ const handleLogout = () => {
 
 .menu-divider {
   height: 1px;
-  background: rgba(0, 0, 0, 0.06);
+  background: var(--color-border-light);
   margin: 8px 16px;
 }
 

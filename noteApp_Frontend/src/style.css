@@ -14,6 +14,8 @@
   --color-primary-100: #CCFBF1;
 
   /* Accent */
+  --color-on-primary: #FFFFFF;
+  --color-on-danger: #FFFFFF;
   --color-accent: #F97316;
   --color-accent-light: #FB923C;
 
@@ -266,6 +268,10 @@ html.dark {
   --color-primary-50: #134E4A;
   --color-primary-100: #115E59;
 
+  /* On-primary — dark text for contrast on lighter primary */
+  --color-on-primary: #0F172A;
+  --color-on-danger: #FFFFFF;
+
   /* Accent */
   --color-accent: #FB923C;
   --color-accent-light: #FDBA74;
@@ -301,59 +307,61 @@ html.dark {
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
 
-  /* Element Plus overrides in dark */
-  --el-color-primary: var(--color-primary);
-  --el-color-primary-light-3: var(--color-primary-light);
-  --el-color-primary-light-5: #5EEADB;
-  --el-color-primary-light-7: #99F6E6;
-  --el-color-primary-light-8: #CCFBF1;
-  --el-color-primary-light-9: #F0FDFA;
-  --el-color-primary-dark-2: var(--color-primary-dark);
+  /* Element Plus teal palette — dark-mode convention:
+     "light" variants are darker (toward bg), "dark" variant is lighter */
+  --el-color-primary: #2DD4BF;
+  --el-color-primary-light-3: #1DA596;
+  --el-color-primary-light-5: #0F766E;
+  --el-color-primary-light-7: #0A534D;
+  --el-color-primary-light-8: #073E39;
+  --el-color-primary-light-9: #052925;
+  --el-color-primary-dark-2: #57E4D0;
+
+  /* Semantic overrides */
   --el-color-success: var(--color-success);
   --el-color-warning: var(--color-warning);
   --el-color-danger: var(--color-danger);
   --el-color-info: var(--color-info);
+
+  /* App-level surface overrides (override Element Plus dark defaults) */
   --el-bg-color: var(--color-bg-white);
   --el-bg-color-overlay: var(--color-bg-white);
+  --el-bg-color-page: var(--color-bg);
   --el-text-color-primary: var(--color-text);
   --el-text-color-regular: var(--color-text-secondary);
   --el-border-color: var(--color-border);
   --el-border-color-light: var(--color-border-light);
+  --el-border-color-lighter: var(--color-border-light);
   --el-fill-color-blank: var(--color-bg-white);
   --el-fill-color-light: var(--color-bg-gray);
+  --el-fill-color: var(--color-bg-gray);
 
   /* Markdown overrides for dark mode */
   .markdown-body blockquote {
-    background: #1E293B;
-    color: #999999;
-    border-left-color: #2DD4BF;
+    background: var(--color-bg-white);
+    color: var(--color-text-secondary);
+    border-left-color: var(--color-primary);
   }
   .markdown-body code {
-    background: #334155;
-    color: #F87171;
+    background: var(--color-border);
+    color: var(--color-danger);
   }
   .markdown-body pre {
-    background: #0F172A;
-    border: 1px solid #334155;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
   }
   .markdown-body th {
-    background: #1E293B;
+    background: var(--color-bg-white);
   }
   .markdown-body a {
-    color: #5EEADB;
+    color: var(--color-primary-light);
   }
   .markdown-body a:hover {
-    color: #2DD4BF;
+    color: var(--color-primary);
   }
 
   /* Skeleton in dark */
   .skeleton {
     background: linear-gradient(90deg, #334155 25%, #475569 50%, #334155 75%);
   }
-
-  /* Element Plus overrides in dark */
-  --el-bg-color-page: var(--color-bg);
-  --el-bg-color: var(--color-bg-white);
-  --el-border-color-lighter: var(--color-border-light);
-  --el-fill-color: var(--color-bg-gray);
 }

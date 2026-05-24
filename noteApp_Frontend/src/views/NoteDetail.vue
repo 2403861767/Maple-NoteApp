@@ -1,9 +1,10 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getNoteDetail, getNoteTags, exportNote, exportNotePdf } from '../api/note'
+import { getNoteDetail, getNoteTags, exportNote, exportNotePdf, exportNoteHtml } from '../api/note'
 import { getCategoryTree } from '../api/category'
 import { renderMarkdown } from '../utils/md'
+import { useShortcuts } from '../composables/useShortcuts'
 
 const route = useRoute()
 const router = useRouter()
@@ -45,6 +46,14 @@ onMounted(async () => {
 
 const skeletonWidths = Array.from({ length: 12 }, () => `${60 + Math.random() * 40}%`)
 const contentHtml = computed(() => renderMarkdown(note.value?.content || ''))
+
+// ---- Keyboard shortcuts ----
+const { register } = useShortcuts()
+const noteId = () => route.params.id
+register('e', () => router.push(`/note/edit/${noteId()}`), { description: '编辑笔记', category: '笔记详情' })
+register('Mod+e', () => router.push(`/note/edit/${noteId()}`), { description: '编辑笔记', category: '笔记详情' })
+register('Backspace', () => router.back(), { description: '返回上一页', category: '笔记详情' })
+register('Mod+[', () => router.back(), { description: '返回上一页', category: '笔记详情' })
 </script>
 
 <template>
@@ -85,6 +94,10 @@ const contentHtml = computed(() => renderMarkdown(note.value?.content || ''))
             <el-button @click="exportNotePdf(note.id, note.title)">
               <el-icon><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></el-icon>
               导出PDF
+            </el-button>
+            <el-button @click="exportNoteHtml(note.id, note.title)">
+              <el-icon><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></el-icon>
+              导出HTML
             </el-button>
             <el-button @click="router.back()">
               <el-icon><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></el-icon>
